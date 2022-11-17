@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProductCustomRepository extends JpaRepository<Product, UUID> {
-    List<ProductCustom> findByuserID(String userID);
+    List<ProductCustom> findByUser_id(String userID);
 }

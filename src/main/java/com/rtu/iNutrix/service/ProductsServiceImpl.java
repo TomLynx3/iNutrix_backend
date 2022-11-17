@@ -28,7 +28,7 @@ public class ProductsServiceImpl implements ProductsService {
     public List<ProductDTO> getAllProducts() {
         String userID = _userDataService.getUserID();
         List<ProductDTO> commonProducts = _productsRepo.findAll().stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
-        List<ProductDTO> personalizedProducts = _productsCustomRepo.findByuserID(userID).stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
+        List<ProductDTO> personalizedProducts = _productsCustomRepo.findByUser_id(userID).stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
         return Stream.concat(commonProducts.stream(), personalizedProducts.stream()).collect(Collectors.toList());
     }
 }
