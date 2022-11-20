@@ -2,11 +2,15 @@ package com.rtu.iNutrix.controller;
 
 
 import com.rtu.iNutrix.models.BaseResponse;
+import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
 import com.rtu.iNutrix.service.interfaces.ProductsService;
+import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/products")
@@ -21,6 +25,38 @@ public class ProductsController {
 
         res.setResult(_productsService.getAllProducts());
         res.setSuccess(true);
+        return res;
+    }
+
+    @PostMapping("/ban-products")
+    public BaseResponse banProducts(@RequestBody @Valid List<BannedProductDTO> products){
+        BaseResponse res = new BaseResponse();
+
+
+        _productsService.banProducts(products);
+        res.setSuccess(true);
+
+        return res;
+    }
+
+    @GetMapping("/ban-products")
+    public  BaseResponse getBannedProducts() throws ProductErrorCodes.SystemProductNotFoundException {
+        BaseResponse res = new BaseResponse();
+
+        res.setResult(_productsService.getBannedProducts());
+        res.setSuccess(true);
+
+        return res;
+    }
+
+
+    @PostMapping("/ban-products-remove")
+    public BaseResponse removeFromBanList(@RequestBody List<UUID> ids){
+        BaseResponse res=  new BaseResponse();
+
+        _productsService.removeFromBanList(ids);
+        res.setSuccess(true);
+
         return res;
     }
 }

@@ -1,6 +1,7 @@
 package com.rtu.iNutrix.models.DTO.Products;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rtu.iNutrix.models.entities.Product;
 import com.rtu.iNutrix.models.entities.ProductCustom;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,6 +17,7 @@ import javax.persistence.Column;
 public class ProductDTO {
     
     public ProductDTO(Product entity){
+        this.id = entity.getId();
         this.productGroup = new ProductGroupDTO(entity.getProductGroup());
         this.name = entity.getName();
         this.protein = entity.getProtein();
@@ -30,10 +33,12 @@ public class ProductDTO {
         this.Ca = entity.getCa();
         this.P = entity.getP();
         this.Fe = entity.getFe();
+        this.isCustom = false;
 
     }
 
     public ProductDTO(ProductCustom entity){
+        this.id = entity.getId();
         this.productGroup = new ProductGroupDTO(entity.getProductGroup());
         this.name = entity.getName();
         this.protein = entity.getProtein();
@@ -49,9 +54,11 @@ public class ProductDTO {
         this.Ca = entity.getCa();
         this.P = entity.getP();
         this.Fe = entity.getFe();
+        this.isCustom = false;
 
     }
 
+    private UUID id;
 
     private ProductGroupDTO productGroup;
 
@@ -82,4 +89,7 @@ public class ProductDTO {
     private double P;
 
     private double Fe;
+
+    @JsonProperty("isCustom")
+    private boolean isCustom = false;
 }

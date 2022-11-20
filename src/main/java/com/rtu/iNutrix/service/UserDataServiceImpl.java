@@ -5,7 +5,6 @@ import com.rtu.iNutrix.models.DTO.UserDataDTO;
 import com.rtu.iNutrix.models.entities.User;
 import com.rtu.iNutrix.repositories.UserRepository;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,5 +44,10 @@ public class UserDataServiceImpl implements UserDataService {
     @Override
     public String getUserID() {
         return _user.getId();
+    }
+
+    @Override
+    public User getUser() {
+        return _user;
     }
 }

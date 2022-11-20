@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.persistence.*;
+import java.util.Set;
 
 
 @Getter
@@ -34,4 +35,7 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "activity_level", nullable = false)
     private LookUpItem activityLevel;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private Set<BannedProduct> bannedProducts;
 }
