@@ -14,7 +14,6 @@ import javax.persistence.*;
 @Accessors(chain = true)
 @Entity
 @Table(name="`Product`")
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class Product extends  BaseEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
