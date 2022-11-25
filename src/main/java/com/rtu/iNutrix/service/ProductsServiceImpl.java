@@ -108,5 +108,17 @@ public class ProductsServiceImpl implements ProductsService {
         _productsCustomRepo.save(product);
     }
 
+    @Override
+    public void deleteCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        _productsCustomRepo.delete(product);
+    }
+
+    @Override
+    public void editCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        product.setId(productDTO.getId());
+        _productsCustomRepo.save(product);
+    }
 
 }
