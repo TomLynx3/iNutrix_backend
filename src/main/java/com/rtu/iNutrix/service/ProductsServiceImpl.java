@@ -4,6 +4,7 @@ import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.models.entities.BannedProduct;
 import com.rtu.iNutrix.models.entities.Product;
+import com.rtu.iNutrix.models.entities.ProductCustom;
 import com.rtu.iNutrix.repositories.BannedProductRepository;
 import com.rtu.iNutrix.repositories.ProductCustomRepository;
 import com.rtu.iNutrix.repositories.ProductRepository;
@@ -98,6 +99,13 @@ public class ProductsServiceImpl implements ProductsService {
     @Override
     public void removeFromBanList(List<UUID> ids) {
         _bannedProductRepo.deleteByIdAndUserId(ids,_userDataService.getUserID());
+    }
+
+
+    @Override
+    public void addCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        _productsCustomRepo.save(product);
     }
 
 

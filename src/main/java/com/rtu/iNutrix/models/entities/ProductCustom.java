@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 
 import javax.persistence.*;
 
@@ -15,6 +16,27 @@ import javax.persistence.*;
 @Entity
 @Table(name="`ProductCustom`")
 public class ProductCustom extends  BaseEntity{
+
+   public ProductCustom(ProductDTO productDTO, User user) {
+        LookUpItem productGroup = new LookUpItem();
+        productGroup.setId(productDTO.getProductGroup().getId());
+        this.productGroup = productGroup;
+        this.name = productDTO.getName();
+        this.protein = productDTO.getProtein();
+        this.fat = productDTO.getFat();
+        this.carbohydrates = productDTO.getCarbohydrates();
+        this.kJ = productDTO.getKJ();
+        this.kcal = productDTO.getKcal();
+        this.A = productDTO.getA();
+        this.B1 = productDTO.getB1();
+        this.B2 = productDTO.getB2();
+        this.PP = productDTO.getPP();
+        this.C = productDTO.getC();
+        this.Ca = productDTO.getCa();
+        this.P = productDTO.getP();
+        this.Fe = productDTO.getFe();
+        this.user = user;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_group", nullable = false)

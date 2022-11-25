@@ -3,6 +3,7 @@ package com.rtu.iNutrix.controller;
 
 import com.rtu.iNutrix.models.BaseResponse;
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,15 @@ public class ProductsController {
         _productsService.removeFromBanList(ids);
         res.setSuccess(true);
 
+        return res;
+    }
+
+    @PostMapping("/custom-product-add")
+    public BaseResponse customProductAdd(@RequestBody @Valid ProductDTO product) {
+        BaseResponse res = new BaseResponse();
+
+        _productsService.addCustomProduct(product);
+        res.setSuccess(true);
         return res;
     }
 }

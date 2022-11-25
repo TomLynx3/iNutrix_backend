@@ -13,4 +13,6 @@ public interface ProductsService {
     void banProducts(List<BannedProductDTO> products);
     List<BannedProductDTO> getBannedProducts() throws ProductErrorCodes.SystemProductNotFoundException;
     void removeFromBanList(List<UUID> ids);
+
+    void addCustomProduct(ProductDTO productDTO);
 }
