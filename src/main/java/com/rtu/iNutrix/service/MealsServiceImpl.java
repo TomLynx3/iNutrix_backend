@@ -193,17 +193,6 @@ public class MealsServiceImpl implements MealsService {
         return null;
     }
 
-
-    private void _addCustomConstraintForProductGroup(ExpressionsBasedModel model,HashMap<ProductDTO,Variable> variables, String name,double lowerValue,double upperValue,UUID productGroup){
-        Map<ProductDTO, Variable> filtredVariables = variables.entrySet().stream().filter(x->x.getKey().getProductGroup().getId().equals(productGroup)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
-
-        Expression exp = model.addExpression(name).lower(lowerValue).upper(upperValue);
-
-        for (Map.Entry<ProductDTO, Variable> entry :filtredVariables.entrySet()) {
-            exp.set(entry.getValue(),1);
-        }
-    }
-
     private void _addCustomConstraintForProductGroup(MPSolver solver ,HashMap<ProductDTO,MPVariable> variables, String name,double lowerValue,double upperValue,UUID productGroup){
         Map<ProductDTO, MPVariable> filtredVariables = variables.entrySet().stream().filter(x->x.getKey().getProductGroup().getId().equals(productGroup)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
