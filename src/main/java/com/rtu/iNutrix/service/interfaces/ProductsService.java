@@ -2,6 +2,7 @@ package com.rtu.iNutrix.service.interfaces;
 
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface ProductsService {
     void banProducts(List<BannedProductDTO> products);
     List<BannedProductDTO> getBannedProducts() throws ProductErrorCodes.SystemProductNotFoundException;
     void removeFromBanList(List<UUID> ids);
+    List<ProductGroupDTO> getProductGroups();
 }
