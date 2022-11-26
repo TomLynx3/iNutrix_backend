@@ -16,17 +16,6 @@ public class MealsController {
     private MealsService _mealsService;
 
 
-    @GetMapping("")
-    public BaseResponse getProducts() throws IllegalAccessException, InstantiationException {
-        BaseResponse res = new BaseResponse();
-
-
-        res.setResult(_mealsService.getDiet(7));
-
-        res.setSuccess(true);
-        return res;
-    }
-
     @PostMapping("/get-diet")
     public  BaseResponse getDiet(@RequestBody DietRequest req) throws IllegalAccessException {
 

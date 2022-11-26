@@ -14,13 +14,10 @@ import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -34,7 +31,7 @@ public class MealsServiceImpl implements MealsService {
 
     @Autowired
     private ProductsService _productService;
-    
+
     @Override
     public DietDayMetaData getDietDayMetadata() throws IllegalAccessException {
         Loader.loadNativeLibraries();
@@ -60,42 +57,6 @@ public class MealsServiceImpl implements MealsService {
        // _addCustomConstraintForProductGroup(solver,map,"Meat",1,3,LookUpConstants.LookUp_ProductGroup_MeatProducts);
         //Cereal Constraints
       //  _addCustomConstraintForProductGroup(solver,map,"Cereal Products",1,4.5,LookUpConstants.LookUp_ProductGroup_CerealProducts);
-
-//        HashMap<Nutrient, MPConstraint> nutrientsConstraints = new HashMap<>();
-//
-//        Class<?> nutrientClass = nutrients.getClass();
-//
-//        Field[] nutrientFields = nutrientClass.getDeclaredFields();
-//
-//        for(Field field:nutrientFields){
-//            field.setAccessible(true);
-//
-//            Nutrient nutrient = (Nutrient) field.get(nutrients);
-//
-//            nutrientsConstraints.put(nutrient,solver.makeConstraint(nutrient.getMinimumValue(),nutrient.getMaximumValue(),nutrient.getName()));
-//        }
-//
-//
-//        for(Map.Entry<Nutrient,MPConstraint> entry : nutrientsConstraints.entrySet()){
-//
-//            MPConstraint constraint = entry.getValue();
-//            Nutrient nutrient = entry.getKey();
-//
-//            for(Map.Entry<ProductDTO, MPVariable> item : map.entrySet()){
-//                Class<?> productClass = item.getKey().getClass();
-//                List<Field> fields = Arrays.stream(productClass.getDeclaredFields()).toList();
-//                Optional<Field> field = fields.stream().filter(x->x.getName().toLowerCase(Locale.ROOT).equals(nutrient.getName().toLowerCase(Locale.ROOT))).findFirst();
-//
-//                if(field.isPresent()){
-//                    field.get().setAccessible(true);
-//                    double value = field.get().getDouble(item.getKey());
-//
-//                    constraint.setCoefficient(item.getValue(),value);
-//                }
-//            }
-//
-//        }
-
 
         MPConstraint protein = solver.makeConstraint(nutrients.getProtein().getMinimumValue(),nutrients.getProtein().getMaximumValue(),"Protein");
         MPConstraint carbs = solver.makeConstraint(nutrients.getCarbohydrates().getMinimumValue(),nutrients.getCarbohydrates().getMaximumValue(),"Carbs");
@@ -184,12 +145,6 @@ public class MealsServiceImpl implements MealsService {
             if(entry.getValue().solutionValue() > 0){
                 ProductDTO product = entry.getKey();
                 double value = entry.getValue().solutionValue();
-//
-//                DailyProduct mealProduct = new DailyProduct();
-//
-//                mealProduct.setProductId(product.getId());
-//                mealProduct.setName(product.getName());
-//                mealProduct.setAmount(value);
 
                 mealProducts.add(new DailyProduct(product,value));
 
@@ -228,6 +183,12 @@ public class MealsServiceImpl implements MealsService {
     public List<MealDTO> getMealsForDay(List<DailyProduct> products) {
         Loader.loadNativeLibraries();
         MPSolver solver = MPSolver.createSolver("GLOP");
+
+
+        //Breakfast 35% of calories
+        //Lunch 45% of calories
+        //20% of calories
+
 
         return null;
     }
