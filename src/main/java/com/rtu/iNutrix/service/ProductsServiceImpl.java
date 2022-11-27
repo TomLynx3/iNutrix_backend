@@ -5,6 +5,7 @@ import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import com.rtu.iNutrix.models.entities.BannedProduct;
 import com.rtu.iNutrix.models.entities.Product;
+import com.rtu.iNutrix.models.entities.ProductCustom;
 import com.rtu.iNutrix.repositories.BannedProductRepository;
 import com.rtu.iNutrix.repositories.LookUpItemRepository;
 import com.rtu.iNutrix.repositories.ProductCustomRepository;
@@ -110,5 +111,25 @@ public class ProductsServiceImpl implements ProductsService {
         return _lookUpItemRepo.getLookUpItemsByLookUpId(LookUpConstants.LookUp_ProductGroup).stream().map(x->new ProductGroupDTO(x)).collect(Collectors.toList());
     }
 
+
+    @Override
+    public void addCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        _productsCustomRepo.save(product);
+    }
+
+    @Override
+    public void deleteCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        product.setId(productDTO.getId());
+        _productsCustomRepo.delete(product);
+    }
+
+    @Override
+    public void editCustomProduct(ProductDTO productDTO) {
+        ProductCustom product = new ProductCustom(productDTO, _userDataService.getUser());
+        product.setId(productDTO.getId());
+        _productsCustomRepo.save(product);
+    }
 
 }

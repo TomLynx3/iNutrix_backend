@@ -1,8 +1,10 @@
 package com.rtu.iNutrix.controller;
 
 
+import com.fasterxml.jackson.databind.ser.Serializers;
 import com.rtu.iNutrix.models.BaseResponse;
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,31 @@ public class ProductsController {
 
         return res;
     }
+
+    @PostMapping("/custom-product-add")
+    public BaseResponse customProductAdd(@RequestBody @Valid ProductDTO productDTO) {
+        BaseResponse res = new BaseResponse();
+        _productsService.addCustomProduct(productDTO);
+        res.setSuccess(true);
+        return res;
+    }
+
+    @PostMapping("/custom-product-delete")
+    public BaseResponse customProductDelete(@RequestBody @Valid ProductDTO productDTO) {
+        BaseResponse res = new BaseResponse();
+        _productsService.deleteCustomProduct(productDTO);
+        res.setSuccess(true);
+        return res;
+    }
+
+    @PostMapping("/custom-product-edit")
+    public BaseResponse customProductEdit(@RequestBody @Valid ProductDTO productDTO) {
+        BaseResponse res = new BaseResponse();
+        _productsService.editCustomProduct(productDTO);
+        res.setSuccess(true);
+        return res;
+    }
+
 
     @GetMapping("/product-groups")
     public BaseResponse getProductGroups(){
