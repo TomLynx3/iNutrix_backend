@@ -92,4 +92,5 @@ public class ProductDTO {
 
     @JsonProperty("isCustom")
     private boolean isCustom = false;
+
 }

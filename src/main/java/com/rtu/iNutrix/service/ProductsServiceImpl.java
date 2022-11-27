@@ -2,14 +2,17 @@ package com.rtu.iNutrix.service;
 
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import com.rtu.iNutrix.models.entities.BannedProduct;
 import com.rtu.iNutrix.models.entities.Product;
 import com.rtu.iNutrix.models.entities.ProductCustom;
 import com.rtu.iNutrix.repositories.BannedProductRepository;
+import com.rtu.iNutrix.repositories.LookUpItemRepository;
 import com.rtu.iNutrix.repositories.ProductCustomRepository;
 import com.rtu.iNutrix.repositories.ProductRepository;
 import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
+import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,6 +34,8 @@ public class ProductsServiceImpl implements ProductsService {
     private ProductRepository _productsRepo;
     @Autowired
     private ProductCustomRepository _productsCustomRepo;
+    @Autowired
+    private LookUpItemRepository _lookUpItemRepo;
 
 
     @Autowired
@@ -99,6 +104,11 @@ public class ProductsServiceImpl implements ProductsService {
     @Override
     public void removeFromBanList(List<UUID> ids) {
         _bannedProductRepo.deleteByIdAndUserId(ids,_userDataService.getUserID());
+    }
+
+    @Override
+    public List<ProductGroupDTO> getProductGroups() {
+        return _lookUpItemRepo.getLookUpItemsByLookUpId(LookUpConstants.LookUp_ProductGroup).stream().map(x->new ProductGroupDTO(x)).collect(Collectors.toList());
     }
 
 

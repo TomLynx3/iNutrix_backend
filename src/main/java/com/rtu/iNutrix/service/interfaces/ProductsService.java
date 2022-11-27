@@ -2,6 +2,7 @@ package com.rtu.iNutrix.service.interfaces;
 
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 
 import java.util.List;
@@ -17,4 +18,5 @@ public interface ProductsService {
     void addCustomProduct(ProductDTO productDTO);
     void deleteCustomProduct(ProductDTO productDTO);
     void editCustomProduct(ProductDTO productDTO);
+    List<ProductGroupDTO> getProductGroups();
 }

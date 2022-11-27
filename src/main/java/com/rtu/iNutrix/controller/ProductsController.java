@@ -87,4 +87,14 @@ public class ProductsController {
     }
 
 
+    @GetMapping("/product-groups")
+    public BaseResponse getProductGroups(){
+        BaseResponse res=  new BaseResponse();
+
+       res.setResult(_productsService.getProductGroups());
+       res.setSuccess(true);
+
+        return res;
+    }
+
 }
