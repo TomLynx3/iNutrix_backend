@@ -54,7 +54,7 @@ public class ProductsController {
 
     @PostMapping("/ban-products-remove")
     public BaseResponse removeFromBanList(@RequestBody List<UUID> ids){
-        BaseResponse res=  new BaseResponse();
+        BaseResponse res =  new BaseResponse();
 
         _productsService.removeFromBanList(ids);
         res.setSuccess(true);
@@ -65,15 +65,15 @@ public class ProductsController {
     @PostMapping("/custom-product-add")
     public BaseResponse customProductAdd(@RequestBody @Valid ProductDTO productDTO) {
         BaseResponse res = new BaseResponse();
-        _productsService.addCustomProduct(productDTO);
+        res.setResult( _productsService.addCustomProduct(productDTO));
         res.setSuccess(true);
         return res;
     }
 
     @PostMapping("/custom-product-delete")
-    public BaseResponse customProductDelete(@RequestBody @Valid ProductDTO productDTO) {
+    public BaseResponse customProductDelete(@RequestBody @Valid List<ProductDTO> products) {
         BaseResponse res = new BaseResponse();
-        _productsService.deleteCustomProduct(productDTO);
+        _productsService.deleteCustomProduct(products);
         res.setSuccess(true);
         return res;
     }
