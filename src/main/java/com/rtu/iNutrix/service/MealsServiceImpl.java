@@ -218,7 +218,12 @@ public class MealsServiceImpl implements MealsService {
         // breakfast
         for (ProductHelper productHelper : productHelperList) productHelper.initializeVariable(solver);
         MPConstraint calories1 = solver.makeConstraint(caloriesBreakfast, java.lang.Double.POSITIVE_INFINITY, "calories");
-        for (ProductHelper productHelper : productHelperList) calories1.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+        MPConstraint suitableForBreakfast = solver.makeConstraint(0,0,"suitableForBreakfast");
+        for (ProductHelper productHelper : productHelperList){
+            calories1.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches("LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts")) suitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);
+            else suitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
+        }
         MPObjective objective1 = solver.objective();
         for (ProductHelper productHelper : productHelperList) objective1.setCoefficient(productHelper.mpVariable, 1);
         objective1.setMinimization();
