@@ -23,8 +23,11 @@ public class DailyProduct {
 
     private ProductGroupDTO productGroup;
 
+    private ProductDTO productDTO;
 
-    public DailyProduct(ProductDTO product,double amount){
+
+    public DailyProduct(ProductDTO product, double amount){
+        this.productDTO = product;
         this.productId = product.getId();
         this.name = product.getName();
         this.amount = amount;
