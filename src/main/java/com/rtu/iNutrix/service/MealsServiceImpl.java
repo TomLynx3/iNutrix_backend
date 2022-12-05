@@ -18,6 +18,7 @@ import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -208,17 +209,51 @@ public class MealsServiceImpl implements MealsService {
     @Override
     public List<MealDTO> getMealsForDay(List<DailyProduct> products) {
         Loader.loadNativeLibraries();
-        MPSolver solver = MPSolver.createSolver("GLOP");
+        class ProductHelper {
+            DailyProduct dailyProduct;
+            int productUsed = 0; // 0 - unused; 1 - breakfast; 2 - lunch ...
+            MPVariable mpVariable;
+
+            public void initializeVariable(MPSolver solver) {
+                this.mpVariable = solver.makeIntVar(0,1,this.dailyProduct.getName());
+            }
+            public double getCoefficient() {
+                return dailyProduct.getAmount()*dailyProduct.getProductDTO().getKcal();
+            }
+        }
+        List<ProductHelper> productHelperList = new ArrayList<>();
+
+        
+        double totalCaloryDuringDay = 0;
+        for (DailyProduct dailyProduct : products) {
+            totalCaloryDuringDay+= dailyProduct.getProductDTO().getKcal();
+
+            ProductHelper productHelper = new ProductHelper();
+            productHelper.dailyProduct = dailyProduct;
+            productHelperList.add(productHelper);
+        }
+
+        double caloriesBreakfast = totalCaloryDuringDay * 0.35;
+        double caloriesLunch = totalCaloryDuringDay * 0.45;
+        double caloriesLast = totalCaloryDuringDay * 0.2;
+        MPSolver solver = MPSolver.createSolver("SCIP");
+        List <MealDTO> mealsForDay = new ArrayList<>();
 
         List<MealDTO> meals = new ArrayList<>();
 
-        meals.add(new MealDTO(MealType.BREAKFAST));
-        meals.add(new MealDTO(MealType.LUNCH));
-        meals.add(new MealDTO(MealType.DINNER));
-        //Breakfast 35% of calories
-        //Lunch 45% of calories
-        //20% of calories for Dinner
 
+        // breakfast
+        for (ProductHelper productHelper : productHelperList) productHelper.initializeVariable(solver);
+        MPConstraint calories1 = solver.makeConstraint(caloriesBreakfast, java.lang.Double.POSITIVE_INFINITY, "calories");
+        MPConstraint suitableForBreakfast = solver.makeConstraint(0,0,"suitableForBreakfast");
+        for (ProductHelper productHelper : productHelperList){
+            calories1.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches("LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts")) suitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);
+            else suitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
+        }
+        MPObjective objective1 = solver.objective();
+        for (ProductHelper productHelper : productHelperList) objective1.setCoefficient(productHelper.mpVariable, 1);
+        objective1.setMinimization();
 
         return meals;
     }

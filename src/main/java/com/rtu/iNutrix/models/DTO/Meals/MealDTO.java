@@ -12,7 +12,10 @@ import java.util.List;
 @Setter
 
 public class MealDTO {
-
+    public MealDTO(MealType mealType, List<DailyProduct> dailyProductList) {
+        this.mealType = mealType;
+        this.products = dailyProductList;
+    }
     private MealType mealType;
 
     private List<DailyProduct> products;
