@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DailyNutrientAmount {
+public class  DailyNutrientAmount {
 
     private double minimumValue;
     private double maximumValue;

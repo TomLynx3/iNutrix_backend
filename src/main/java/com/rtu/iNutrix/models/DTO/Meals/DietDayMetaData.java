@@ -5,13 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
 
 @Getter
 @Setter
-
+@NoArgsConstructor
 public class DietDayMetaData {
 
 
@@ -29,6 +30,8 @@ public class DietDayMetaData {
         this.P = new DailyNutrientAmount(nutrients.getP().getMinimumValue(), nutrients.getP().getMaximumValue(),0);
         this.Fe = new DailyNutrientAmount(nutrients.getFe().getMinimumValue(), nutrients.getFe().getMaximumValue(),0);
     }
+
+    private  List<MealDTO> meals;
 
     private List<DailyProduct> products;
 

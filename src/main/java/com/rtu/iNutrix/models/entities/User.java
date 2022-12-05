@@ -38,4 +38,7 @@ public class User {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private Set<BannedProduct> bannedProducts;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private Set<Diet> diets;
 }

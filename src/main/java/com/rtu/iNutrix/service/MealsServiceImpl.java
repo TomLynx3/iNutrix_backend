@@ -1,5 +1,6 @@
 package com.rtu.iNutrix.service;
 
+import com.google.api.client.util.Sets;
 import com.google.ortools.Loader;
 import com.google.ortools.linearsolver.MPConstraint;
 import com.google.ortools.linearsolver.MPObjective;
@@ -8,13 +9,14 @@ import com.google.ortools.linearsolver.MPVariable;
 import com.rtu.iNutrix.models.DTO.Meals.*;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.models.DTO.UserDataDTO;
+import com.rtu.iNutrix.models.entities.Diet;
+import com.rtu.iNutrix.models.entities.DietProduct;
+import com.rtu.iNutrix.repositories.DietProductRepository;
+import com.rtu.iNutrix.repositories.DietRepository;
 import com.rtu.iNutrix.service.interfaces.MealsService;
 import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
-import org.ojalgo.optimisation.Expression;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.Variable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,11 +28,23 @@ import java.util.stream.Collectors;
 @Component
 public class MealsServiceImpl implements MealsService {
 
-    @Autowired
-    private UserDataService _userDataService;
+
+    private final UserDataService _userDataService;
+
+
+    private final ProductsService _productService;
+
+    private final DietRepository _dietRepo;
+
+    private  final DietProductRepository _dietProductRepo;
 
     @Autowired
-    private ProductsService _productService;
+    public MealsServiceImpl(UserDataService userDataService,ProductsService productsService, DietRepository dietRepo,DietProductRepository dietProductRepository){
+        this._userDataService = userDataService;
+        this._productService = productsService;
+        this._dietRepo = dietRepo;
+        this._dietProductRepo = dietProductRepository;
+    }
 
     @Override
     public DietDayMetaData getDietDayMetadata() throws IllegalAccessException {
@@ -158,25 +172,37 @@ public class MealsServiceImpl implements MealsService {
     }
 
     @Override
-    public List<DietDay> getDiet(int days) throws IllegalAccessException {
+    public DietDTO getDiet(int days) throws IllegalAccessException {
 
-        List<DietDay> diet = new ArrayList<>();
+        DietDTO dietDTO = new DietDTO();
+        List<DietDayDTO> dietDayDTOS = new ArrayList<>();
         ZonedDateTime today = ZonedDateTime.now(ZoneOffset.UTC);
 
+        DietDetails details = new DietDetails();
+
+        details.setDietGoal(DietGoal.BALANCEDIET);
+
+        dietDTO.setDietDetails(details);
 
         for(int i = 0; i<days;i++){
-            DietDay dietDay = new DietDay();
+            DietDayDTO dietDayDTO = new DietDayDTO();
 
             ZonedDateTime date =  today.plusDays(i);
 
-            dietDay.setDate(date);
-            dietDay.setDietDayMetadata(getDietDayMetadata());
+            DietDayMetaData day = getDietDayMetadata();
+            day.setMeals(getMealsForDay(day.getProducts()));
 
-            diet.add(dietDay);
+            dietDayDTO.setDate(date);
+            dietDayDTO.setDietDayMetadata(day);
+
+
+            dietDayDTOS.add(dietDayDTO);
 
         }
 
-        return diet;
+        dietDTO.setDietDays(dietDayDTOS);
+
+        return dietDTO;
     }
 
     @Override
@@ -184,13 +210,47 @@ public class MealsServiceImpl implements MealsService {
         Loader.loadNativeLibraries();
         MPSolver solver = MPSolver.createSolver("GLOP");
 
+        List<MealDTO> meals = new ArrayList<>();
 
+        meals.add(new MealDTO(MealType.BREAKFAST));
+        meals.add(new MealDTO(MealType.LUNCH));
+        meals.add(new MealDTO(MealType.DINNER));
         //Breakfast 35% of calories
         //Lunch 45% of calories
-        //20% of calories
+        //20% of calories for Dinner
 
 
-        return null;
+        return meals;
+    }
+
+    @Override
+    public UUID saveDiet(DietDTO diet) {
+
+        Diet dietEntity = new Diet();
+
+        List<DietProduct> products = new ArrayList<>();
+
+        dietEntity.setDietGoal(diet.getDietDetails().getDietGoal());
+        dietEntity.setUser(_userDataService.getUser());
+
+
+        for(DietDayDTO dietDay :diet.getDietDays()){
+
+            for(MealDTO meal : dietDay.getDietDayMetadata().getMeals()){
+
+                for(DailyProduct dailyProduct : meal.getProducts()){
+                    products.add(new DietProduct(dailyProduct,meal.getMealType(),dietEntity, dietDay.getDate()));
+                }
+            }
+        }
+
+        dietEntity.setDietProducts(Set.copyOf(products));
+
+        _dietRepo.save(dietEntity);
+        _dietProductRepo.saveAll(dietEntity.getDietProducts());
+
+
+        return dietEntity.getId();
     }
 
     private void _addCustomConstraintForProductGroup(MPSolver solver ,HashMap<ProductDTO,MPVariable> variables, String name,double lowerValue,double upperValue,UUID productGroup){

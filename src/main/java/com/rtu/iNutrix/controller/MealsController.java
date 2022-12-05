@@ -2,7 +2,7 @@ package com.rtu.iNutrix.controller;
 
 
 import com.rtu.iNutrix.models.BaseResponse;
-import com.rtu.iNutrix.models.DTO.Meals.DietDay;
+import com.rtu.iNutrix.models.DTO.Meals.DietDTO;
 import com.rtu.iNutrix.models.DTO.Meals.DietRequest;
 import com.rtu.iNutrix.service.interfaces.MealsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,17 @@ public class MealsController {
         BaseResponse res = new BaseResponse();
 
         res.setResult(_mealsService.getDiet(req.getDays()));
+        res.setSuccess(true);
+
+        return res;
+    }
+
+    @PostMapping("/save-diet")
+    public  BaseResponse saveDiet(@RequestBody DietDTO req)  {
+
+        BaseResponse res = new BaseResponse();
+
+        res.setResult(_mealsService.saveDiet(req));
         res.setSuccess(true);
 
         return res;

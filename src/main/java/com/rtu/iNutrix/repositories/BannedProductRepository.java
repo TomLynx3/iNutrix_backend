@@ -19,5 +19,4 @@ public interface BannedProductRepository extends JpaRepository<BannedProduct, UU
     @Query("DELETE FROM BannedProduct b WHERE b.productId in :ids and b.user.id = :userId")
     void deleteByIdAndUserId(@Param("ids")List<UUID> ids , @Param("userId") String userId);
 
-    
 }

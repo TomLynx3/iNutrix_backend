@@ -23,6 +23,8 @@ public class DailyProduct {
 
     private ProductGroupDTO productGroup;
 
+    private boolean isCustomProduct;
+
 
     public DailyProduct(ProductDTO product,double amount){
         this.productId = product.getId();

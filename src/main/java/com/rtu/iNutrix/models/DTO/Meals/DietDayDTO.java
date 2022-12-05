@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DietDay {
+public class DietDayDTO {
 
 
     private ZonedDateTime date;
