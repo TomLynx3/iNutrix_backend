@@ -16,8 +16,8 @@ public class MealsController {
     private MealsService _mealsService;
 
 
-    @PostMapping("/get-diet")
-    public  BaseResponse getDiet(@RequestBody DietRequest req) throws IllegalAccessException {
+    @PostMapping("/create-diet")
+    public  BaseResponse createDiet(@RequestBody DietRequest req) throws IllegalAccessException {
 
         BaseResponse res = new BaseResponse();
 
