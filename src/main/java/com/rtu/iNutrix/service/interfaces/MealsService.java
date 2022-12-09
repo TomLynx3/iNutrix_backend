@@ -10,9 +10,11 @@ public interface MealsService {
     // DietDayMetaData getMealPlan() throws IllegalAccessException, InstantiationException;
      DietDayMetaData getDietDayMetadata() throws IllegalAccessException;
 
-     DietDTO getDiet(int days) throws IllegalAccessException;
+     DietDTO createDiet(int days) throws IllegalAccessException;
 
      List<MealDTO> getMealsForDay(List<DailyProduct> products);
 
      UUID saveDiet(DietDTO diet);
+
+     DietDTO getCurrentDiet();
 }

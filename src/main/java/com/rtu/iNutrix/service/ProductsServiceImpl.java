@@ -1,9 +1,11 @@
 package com.rtu.iNutrix.service;
 
 import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductBase;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import com.rtu.iNutrix.models.entities.BannedProduct;
+import com.rtu.iNutrix.models.entities.DietProduct;
 import com.rtu.iNutrix.models.entities.Product;
 import com.rtu.iNutrix.models.entities.ProductCustom;
 import com.rtu.iNutrix.repositories.BannedProductRepository;
@@ -109,6 +111,30 @@ public class ProductsServiceImpl implements ProductsService {
     @Override
     public List<ProductGroupDTO> getProductGroups() {
         return _lookUpItemRepo.getLookUpItemsByLookUpId(LookUpConstants.LookUp_ProductGroup).stream().map(x->new ProductGroupDTO(x)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductBase> getProductBases(List<DietProduct> dietProducts) {
+
+        List<ProductBase> result = new ArrayList<>();
+
+        List<UUID> regularProductIds = dietProducts.stream().filter(x->!x.isCustomProduct()).map(x->x.getProductId()).collect(Collectors.toList());
+        List<UUID> customProductsIds = dietProducts.stream().filter(x->x.isCustomProduct()).map(x->x.getProductId()).collect(Collectors.toList());
+
+        List<Product> regularProducts = _productsRepo.findAllById(regularProductIds);
+        List<ProductCustom> customProducts = _productsCustomRepo.findAllById(customProductsIds);
+
+
+        for(Product product : regularProducts){
+            result.add(new ProductBase(product));
+        }
+
+        for (ProductCustom product: customProducts){
+            result.add(new ProductBase(product));
+        }
+
+
+        return result;
     }
 
 

@@ -21,7 +21,7 @@ public class MealsController {
 
         BaseResponse res = new BaseResponse();
 
-        res.setResult(_mealsService.getDiet(req.getDays()));
+        res.setResult(_mealsService.createDiet(req.getDays()));
         res.setSuccess(true);
 
         return res;
@@ -36,5 +36,13 @@ public class MealsController {
         res.setSuccess(true);
 
         return res;
+    }
+
+    @GetMapping
+    public BaseResponse getCurrentDiet(){
+        BaseResponse res = new BaseResponse();
+
+
+        return  res;
     }
 }

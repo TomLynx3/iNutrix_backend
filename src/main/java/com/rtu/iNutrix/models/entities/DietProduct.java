@@ -48,7 +48,7 @@ public class DietProduct extends BaseEntity{
 
         this.mealType = mealType;
         this.productId = dailyProduct.getProductId();
-        this.isCustomProduct = dailyProduct.isCustomProduct();
+        this.isCustomProduct = dailyProduct.isCustom();
         this.amount = dailyProduct.getAmount();
         this.date = date;
         this.diet = diet;

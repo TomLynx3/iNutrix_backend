@@ -1,6 +1,5 @@
 package com.rtu.iNutrix.service;
 
-import com.google.api.client.util.Sets;
 import com.google.ortools.Loader;
 import com.google.ortools.linearsolver.MPConstraint;
 import com.google.ortools.linearsolver.MPObjective;
@@ -18,7 +17,6 @@ import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -173,7 +171,7 @@ public class MealsServiceImpl implements MealsService {
     }
 
     @Override
-    public DietDTO getDiet(int days) throws IllegalAccessException {
+    public DietDTO createDiet(int days) throws IllegalAccessException {
 
         DietDTO dietDTO = new DietDTO();
         List<DietDayDTO> dietDayDTOS = new ArrayList<>();
@@ -328,6 +326,12 @@ public class MealsServiceImpl implements MealsService {
 
 
         return dietEntity.getId();
+    }
+
+    @Override
+    public DietDTO getCurrentDiet() {
+
+        return null;
     }
 
     private void _addCustomConstraintForProductGroup(MPSolver solver ,HashMap<ProductDTO,MPVariable> variables, String name,double lowerValue,double upperValue,UUID productGroup){

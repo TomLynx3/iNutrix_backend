@@ -41,4 +41,7 @@ public class User {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private Set<Diet> diets;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private Set<DietHistory> dietHistories;
 }

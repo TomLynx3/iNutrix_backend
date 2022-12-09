@@ -1,6 +1,7 @@
 package com.rtu.iNutrix.models.DTO.Meals;
 
 
+import com.rtu.iNutrix.models.DTO.Products.ProductBase;
 import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
 import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
 import lombok.Getter;
@@ -11,28 +12,15 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@NoArgsConstructor
-public class DailyProduct {
 
+public class DailyProduct extends ProductBase {
 
-    private UUID productId;
-
-    private String name;
-
-    private double amount;
-
-    private ProductGroupDTO productGroup;
-
-    private boolean isCustomProduct;
 
     private ProductDTO productDTO;
 
 
     public DailyProduct(ProductDTO product, double amount){
+        super(product.getId(),product.getName(),amount,product.getProductGroup(),product.isCustom());
         this.productDTO = product;
-        this.productId = product.getId();
-        this.name = product.getName();
-        this.amount = amount;
-        this.productGroup = product.getProductGroup();
     }
 }

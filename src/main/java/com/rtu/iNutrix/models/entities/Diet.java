@@ -33,4 +33,10 @@ public class Diet extends BaseEntity{
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "diet")
     private Set<DietProduct> dietProducts;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "diet")
+    private Set<DietHistory> dietHistories;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "diet")
+    private Set<DietProgress> dietProgress;
 }
