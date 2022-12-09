@@ -17,10 +17,8 @@ import com.rtu.iNutrix.utilities.errors.ProductErrorCodes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,8 +44,24 @@ public class ProductsServiceImpl implements ProductsService {
     public List<ProductDTO> getAllProducts() {
         String userID = _userDataService.getUserID();
         List<ProductDTO> commonProducts = _productsRepo.findAll().stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
-        List<ProductDTO> personalizedProducts = _productsCustomRepo.findByUser_id(userID).stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
-        return Stream.concat(commonProducts.stream(), personalizedProducts.stream()).collect(Collectors.toList());
+        List<ProductDTO> personalizedProducts = _productsCustomRepo.findUserActiveProducts(userID).stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
+        List<ProductDTO> allProducts = Stream.concat(commonProducts.stream(), personalizedProducts.stream()).collect(Collectors.toList());
+        _setIsBannedProduct(allProducts);
+        return allProducts;
+    }
+
+    private void _setIsBannedProduct(List<ProductDTO> productDTOS){
+        List<BannedProduct> bannedProducts = _bannedProductRepo.findByUser_id(_userDataService.getUserID());
+
+        for(ProductDTO productDTO : productDTOS){
+
+            Optional<BannedProduct> bannedProduct = bannedProducts.stream().filter(x ->x.getProductId().equals(productDTO.getId())).findFirst();
+
+            if(bannedProduct.isPresent()) {
+                productDTO.setBanned(true);
+
+            }
+        }
     }
 
     @Override
@@ -120,10 +134,8 @@ public class ProductsServiceImpl implements ProductsService {
     }
 
     @Override
-    public void deleteCustomProduct(List<ProductDTO> products) {
-        ProductCustom product = new ProductCustom((ProductDTO) products, _userDataService.getUser());
-        product.setId(((ProductDTO) products).getId());
-        _productsCustomRepo.deleteById((List<UUID>) product);
+    public void deleteCustomProducts(List<UUID> productIds){
+        _productsCustomRepo.deleteByIds(productIds);
     }
 
     @Override

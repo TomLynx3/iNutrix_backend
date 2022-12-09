@@ -71,9 +71,9 @@ public class ProductsController {
     }
 
     @PostMapping("/custom-product-delete")
-    public BaseResponse customProductDelete(@RequestBody @Valid List<ProductDTO> products) {
+    public BaseResponse customProductDelete(@RequestBody @Valid  List<UUID> productIds) {
         BaseResponse res = new BaseResponse();
-        _productsService.deleteCustomProduct(products);
+        _productsService.deleteCustomProducts(productIds);
         res.setSuccess(true);
         return res;
     }
