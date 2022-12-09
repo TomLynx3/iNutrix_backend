@@ -1,6 +1,5 @@
 package com.rtu.iNutrix.service;
 
-import com.google.api.client.util.Sets;
 import com.google.ortools.Loader;
 import com.google.ortools.linearsolver.MPConstraint;
 import com.google.ortools.linearsolver.MPObjective;
@@ -18,7 +17,6 @@ import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -211,14 +209,10 @@ public class MealsServiceImpl implements MealsService {
         Loader.loadNativeLibraries();
         class ProductHelper {
             DailyProduct dailyProduct;
-            int productUsed = 0; // 0 - unused; 1 - breakfast; 2 - lunch ...
+            double productAmountUsed[] = new double[3]; // ProductAmountUsed[0] for product amount used in breakfast, 1 -
             MPVariable mpVariable;
-
-            public void initializeVariable(MPSolver solver) {
-                this.mpVariable = solver.makeIntVar(0,1,this.dailyProduct.getName());
-            }
             public double getCoefficient() {
-                return dailyProduct.getAmount()*dailyProduct.getProductDTO().getKcal();
+                return dailyProduct.getProductDTO().getKcal();
             }
         }
         List<ProductHelper> productHelperList = new ArrayList<>();
@@ -226,77 +220,82 @@ public class MealsServiceImpl implements MealsService {
 
         double totalCaloryDuringDay = 0;
         for (DailyProduct dailyProduct : products) {
-            totalCaloryDuringDay+= dailyProduct.getProductDTO().getKcal();
+            totalCaloryDuringDay+= dailyProduct.getProductDTO().getKcal()*dailyProduct.getAmount();
 
             ProductHelper productHelper = new ProductHelper();
             productHelper.dailyProduct = dailyProduct;
             productHelperList.add(productHelper);
         }
 
-        double caloriesBreakfast = totalCaloryDuringDay * 0.35;
-        double caloriesLunch = totalCaloryDuringDay * 0.45;
-        double caloriesLast = totalCaloryDuringDay * 0.2;
-        MPSolver solver = MPSolver.createSolver("SCIP");
+        final double caloriesBreakfast = totalCaloryDuringDay * 0.35;
+        final double caloriesLunch = totalCaloryDuringDay * 0.45;
+        final double caloriesLast = totalCaloryDuringDay * 0.2;
+        final int calorieTolerance = 200; // solver finds solution between (necessary cal) and (necessary cal+this value)
+
+        MPSolver solver = MPSolver.createSolver("GLOP");
         List <MealDTO> mealsForDay = new ArrayList<>();
 
 
 
         // breakfast
-        for (ProductHelper productHelper : productHelperList) productHelper.initializeVariable(solver);
-        MPConstraint calories1 = solver.makeConstraint(caloriesBreakfast, java.lang.Double.POSITIVE_INFINITY, "calories");
-        MPConstraint suitableForBreakfast = solver.makeConstraint(0,0,"suitableForBreakfast");
+        for (ProductHelper productHelper : productHelperList) productHelper.mpVariable = solver.makeIntVar(0, productHelper.dailyProduct.getAmount(), productHelper.dailyProduct.getName());
+        MPConstraint calories = solver.makeConstraint(caloriesBreakfast, caloriesBreakfast+calorieTolerance, "calories");
+        MPConstraint unsuitableForBreakfast = solver.makeConstraint(0,0,"suitableForBreakfast");
         for (ProductHelper productHelper : productHelperList){
-            calories1.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
-            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches("LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts")) suitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);
-            else suitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
+            calories.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches("LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts")) unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);
+            else unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
         }
-        MPObjective objective1 = solver.objective();
-        for (ProductHelper productHelper : productHelperList) objective1.setCoefficient(productHelper.mpVariable, 1);
-        objective1.setMinimization();
+        MPObjective objective = solver.objective();
+        for (ProductHelper productHelper : productHelperList) objective.setCoefficient(productHelper.mpVariable, 1);
+        objective.setMaximization();
 
         final MPSolver.ResultStatus resultStatusBreakfast = solver.solve();
         if (resultStatusBreakfast == MPSolver.ResultStatus.OPTIMAL || resultStatusBreakfast == MPSolver.ResultStatus.FEASIBLE){
-            for (ProductHelper productHelper: productHelperList) if (productHelper.mpVariable.solutionValue() == 1) productHelper.productUsed = 1;
+            for (ProductHelper productHelper : productHelperList) productHelper.productAmountUsed[0] = productHelper.mpVariable.solutionValue();
         }
         else return null;
         solver.clear();
+
         // lunch
-        List<ProductHelper> productsAvailableForLunch = new ArrayList<>();
-        for (ProductHelper productHelper : productHelperList) if (productHelper.productUsed == 0) productsAvailableForLunch.add(productHelper);
-        for (ProductHelper productHelper : productsAvailableForLunch) productHelper.initializeVariable(solver);
-        MPConstraint calories2 = solver.makeConstraint(caloriesLunch, java.lang.Double.POSITIVE_INFINITY, "calories");
-        for (ProductHelper productHelper : productsAvailableForLunch) calories2.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
-        MPObjective objective2 = solver.objective();
-        for (ProductHelper productHelper : productsAvailableForLunch) objective2.setCoefficient(productHelper.mpVariable, 1);
-        objective2.setMinimization();
+        for (ProductHelper productHelper : productHelperList) productHelper.mpVariable = solver.makeIntVar(0,productHelper.dailyProduct.getAmount()-productHelper.productAmountUsed[0], productHelper.dailyProduct.getName());
+        calories = solver.makeConstraint(caloriesLunch, caloriesLunch+calorieTolerance, "calories");
+        for (ProductHelper productHelper : productHelperList) calories.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+        objective = solver.objective();
+        for (ProductHelper productHelper : productHelperList) objective.setCoefficient(productHelper.mpVariable, 1);
+        objective.setMaximization();
 
         final MPSolver.ResultStatus resultStatusLunch = solver.solve();
         if (resultStatusLunch == MPSolver.ResultStatus.OPTIMAL || resultStatusLunch == MPSolver.ResultStatus.FEASIBLE){
-            for (ProductHelper productHelper: productsAvailableForLunch) if (productHelper.mpVariable.solutionValue() == 1) productHelper.productUsed = 2;
+            for (ProductHelper productHelper: productHelperList) productHelper.productAmountUsed[1] = productHelper.mpVariable.solutionValue();
         }
         else return null;
 
         // dinner
-        for (ProductHelper productHelper : productHelperList) if (productHelper.productUsed == 0) productHelper.productUsed = 3;
+        for (ProductHelper productHelper : productHelperList) productHelper.productAmountUsed[2] = productHelper.dailyProduct.getAmount()-(productHelper.productAmountUsed[0]+productHelper.productAmountUsed[1]);
+
+        List<List<DailyProduct>> dailyProductLists = new ArrayList<List<DailyProduct>> (3);
+        for (int i = 0; i < 3; i++) dailyProductLists.add(new ArrayList<DailyProduct>());
+        /*
         List<DailyProduct> breakfastProducts = new ArrayList<>();
         List<DailyProduct> lunchProducts = new ArrayList<>();
         List<DailyProduct> dinnerProducts = new ArrayList<>();
-        for (ProductHelper productHelper : productHelperList) {
-            switch (productHelper.productUsed) {
-                case 1:
-                    breakfastProducts.add(productHelper.dailyProduct);
-                    break;
-                case 2:
-                    lunchProducts.add(productHelper.dailyProduct);
-                    break;
-                case 3:
-                    dinnerProducts.add(productHelper.dailyProduct);
-                    break;
+         */
+        for (int i = 0; i < dailyProductLists.size(); i++) {
+            for (ProductHelper productHelper : productHelperList) {
+                if (productHelper.productAmountUsed[i] == 0) {
+                    continue;
+                }
+                DailyProduct product = new DailyProduct(productHelper.dailyProduct);
+                product.setAmount(productHelper.productAmountUsed[i]);
+                dailyProductLists.get(i).add(product);
             }
         }
-        mealsForDay.add(new MealDTO(MealType.BREAKFAST, breakfastProducts));
-        mealsForDay.add(new MealDTO(MealType.DINNER, dinnerProducts));
-        mealsForDay.add(new MealDTO(MealType.LUNCH, lunchProducts));
+
+        mealsForDay.add(new MealDTO(MealType.BREAKFAST, dailyProductLists.get(0)));
+        mealsForDay.add(new MealDTO(MealType.LUNCH, dailyProductLists.get(1)));
+        mealsForDay.add(new MealDTO(MealType.DINNER, dailyProductLists.get(2)));
+
         return mealsForDay;
     }
 
