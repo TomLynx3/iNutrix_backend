@@ -23,4 +23,12 @@ public class DailyProduct extends ProductBase {
         super(product.getId(),product.getName(),amount,product.getProductGroup(),product.isCustom());
         this.productDTO = product;
     }
+    public DailyProduct(DailyProduct dailyProduct) { // makes a shallow copy
+        this.productId = dailyProduct.getProductId();
+        this.name = dailyProduct.getName();
+        this.amount = dailyProduct.getAmount();
+        this.productGroup = dailyProduct.getProductGroup();
+        this.isCustomProduct = dailyProduct.isCustomProduct();
+        this.productDTO = dailyProduct.getProductDTO();
+    }
 }
