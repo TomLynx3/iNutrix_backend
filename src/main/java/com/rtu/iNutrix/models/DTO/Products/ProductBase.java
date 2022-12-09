@@ -45,4 +45,8 @@ public class ProductBase {
         this.isCustom = true;
     }
 
+    public ProductBase(){
+
+    }
+
 }
