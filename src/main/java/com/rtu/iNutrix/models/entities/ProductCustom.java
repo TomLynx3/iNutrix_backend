@@ -88,4 +88,7 @@ public class ProductCustom extends  BaseEntity{
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(name="is_active", nullable = false)
+    private boolean isActive = true;
+
 }
