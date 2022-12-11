@@ -54,7 +54,7 @@ public class ProductDTO {
         this.Ca = entity.getCa();
         this.P = entity.getP();
         this.Fe = entity.getFe();
-        this.isCustom = false;
+        this.isCustom = true;
 
     }
 
@@ -92,5 +92,8 @@ public class ProductDTO {
 
     @JsonProperty("isCustom")
     private boolean isCustom = false;
+
+    @JsonProperty("isBanned")
+    private boolean isBanned = false;
 
 }

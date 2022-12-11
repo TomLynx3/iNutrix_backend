@@ -16,7 +16,7 @@ public interface ProductsService {
     void removeFromBanList(List<UUID> ids);
 
     UUID addCustomProduct(ProductDTO productDTO);
-    void deleteCustomProduct(List<ProductDTO> products);
+    void deleteCustomProducts(List<UUID> productIds);
     void editCustomProduct(ProductDTO productDTO);
     List<ProductGroupDTO> getProductGroups();
     List<ProductBase> getProductBases(List<DietProduct> dietProducts);
