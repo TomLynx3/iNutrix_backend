@@ -1,6 +1,7 @@
 package com.rtu.iNutrix.models.DTO.Diet;
 
 
+import com.rtu.iNutrix.models.DTO.Meals.DietGoal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,4 +17,10 @@ public class DietProgressDTO {
     private UUID id;
 
     private List<DietProgressDay> days;
+
+    private DietGoal dietGoal;
+
+    private double kcal;
+
+
 }

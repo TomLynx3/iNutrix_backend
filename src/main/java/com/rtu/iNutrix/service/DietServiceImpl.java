@@ -5,6 +5,8 @@ import com.rtu.iNutrix.models.DTO.Diet.DietProgressDay;
 import com.rtu.iNutrix.models.DTO.Diet.DietProgressProductDTO;
 import com.rtu.iNutrix.models.DTO.Meals.MealType;
 import com.rtu.iNutrix.models.DTO.Products.ProductBase;
+import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
+import com.rtu.iNutrix.models.DTO.Products.ProductInfoDTO;
 import com.rtu.iNutrix.models.entities.DietHistory;
 import com.rtu.iNutrix.models.entities.DietProduct;
 import com.rtu.iNutrix.models.entities.DietProgress;
@@ -62,6 +64,8 @@ public class DietServiceImpl implements DietService {
         DietProgressDTO progress = new DietProgressDTO();
 
         progress.setId(currentDiet.getDiet().getId());
+        progress.setDietGoal(currentDiet.getDiet().getDietGoal());
+        progress.setKcal(currentDiet.getDiet().getKcal());
 
         List<DietProgress> currentDietProgress = _dietProgressRepo.getDietProgress(progress.getId());
 
@@ -70,6 +74,7 @@ public class DietServiceImpl implements DietService {
         Map<ZonedDateTime,List<DietProduct>> groupedProducts = currentDietProducts.stream().collect(Collectors.groupingBy(x->x.getDate()));
 
         List<DietProgressDay> progressDays = new ArrayList<>();
+
 
         for(Map.Entry<ZonedDateTime,List<DietProduct>> entry : groupedProducts.entrySet()){
             DietProgressDay progressDay = new DietProgressDay();
@@ -95,15 +100,18 @@ public class DietServiceImpl implements DietService {
                 }
                 DietProgressProductDTO dto = new DietProgressProductDTO(base,consumed);
                 _setDietProductAmountAndMealType(currentDietProducts,base.getProductId(),dto);
+
                 progressProductDTOList.add(dto);
 
             }
+
 
            progressDay.setProducts(progressProductDTOList);
            progressDays.add(progressDay);
 
         }
 
+        
         Collections.sort(progressDays, Comparator.comparing(DietProgressDay::getDate));
         progress.setDays(progressDays);
 
@@ -122,5 +130,6 @@ public class DietServiceImpl implements DietService {
         }
 
     }
+
 
 }

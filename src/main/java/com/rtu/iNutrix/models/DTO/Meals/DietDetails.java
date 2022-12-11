@@ -9,5 +9,6 @@ import lombok.Setter;
 public class DietDetails {
 
     private DietGoal dietGoal;
+    private double kcal;
     private Object details;
 }

@@ -181,7 +181,8 @@ public class MealsServiceImpl implements MealsService {
 
         details.setDietGoal(DietGoal.BALANCEDIET);
 
-        dietDTO.setDietDetails(details);
+
+
 
         for(int i = 0; i<days;i++){
             DietDayDTO dietDayDTO = new DietDayDTO();
@@ -199,6 +200,13 @@ public class MealsServiceImpl implements MealsService {
 
         }
 
+        if(dietDayDTOS.size() >0){
+            DietDayDTO dto = dietDayDTOS.get(0);
+
+            details.setKcal(dto.getDietDayMetadata().getKcal().getActualValue());
+        }
+
+        dietDTO.setDietDetails(details);
         dietDTO.setDietDays(dietDayDTOS);
 
         return dietDTO;
@@ -308,6 +316,7 @@ public class MealsServiceImpl implements MealsService {
 
         dietEntity.setDietGoal(diet.getDietDetails().getDietGoal());
         dietEntity.setUser(_userDataService.getUser());
+        dietEntity.setKcal(diet.getDietDetails().getKcal());
 
 
         for(DietDayDTO dietDay :diet.getDietDays()){

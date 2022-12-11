@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
 import java.time.ZoneOffset;
@@ -30,6 +31,10 @@ public class Diet extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "kcal", nullable = false)
+    @ColumnDefault("0")
+    private double kcal = 0;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "diet")
     private Set<DietProduct> dietProducts;

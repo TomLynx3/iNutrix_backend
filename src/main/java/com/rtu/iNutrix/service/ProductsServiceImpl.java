@@ -1,9 +1,6 @@
 package com.rtu.iNutrix.service;
 
-import com.rtu.iNutrix.models.DTO.Products.BannedProductDTO;
-import com.rtu.iNutrix.models.DTO.Products.ProductBase;
-import com.rtu.iNutrix.models.DTO.Products.ProductDTO;
-import com.rtu.iNutrix.models.DTO.Products.ProductGroupDTO;
+import com.rtu.iNutrix.models.DTO.Products.*;
 import com.rtu.iNutrix.models.entities.BannedProduct;
 import com.rtu.iNutrix.models.entities.DietProduct;
 import com.rtu.iNutrix.models.entities.Product;
@@ -22,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,8 +47,33 @@ public class ProductsServiceImpl implements ProductsService {
         String userID = _userDataService.getUserID();
         List<ProductDTO> commonProducts = _productsRepo.findAll().stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
         List<ProductDTO> personalizedProducts = _productsCustomRepo.findByUser_id(userID).stream().map(x-> new ProductDTO(x)).collect(Collectors.toList());
+
+
         return Stream.concat(commonProducts.stream(), personalizedProducts.stream()).collect(Collectors.toList());
     }
+
+    @Override
+    public List<ProductDTO> getProducts(List<ProductInfoDTO> products) {
+
+        List<ProductDTO> res = new ArrayList<>();
+
+        List<UUID> customProducts = new ArrayList<>();
+        List<UUID> regularProducts = new ArrayList<>();
+
+        for(ProductInfoDTO info :products){
+            if(info.isCustom()){
+                customProducts.add(info.getId());
+            }else{
+                regularProducts.add(info.getId());
+            }
+        }
+
+        res.addAll(_productsRepo.findAllById(regularProducts).stream().map(x->new ProductDTO(x)).collect(Collectors.toList()));
+        res.addAll(_productsCustomRepo.findUserProductsByIds(_userDataService.getUserID(),customProducts).stream().map(x->new ProductDTO(x)).collect(Collectors.toList()));
+
+        return res;
+    }
+
 
     @Override
     public void banProducts(List<BannedProductDTO> products) {

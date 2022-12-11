@@ -13,4 +13,7 @@ public interface ProductCustomRepository extends JpaRepository<ProductCustom, UU
 
     @Query("DELETE FROM ProductCustom pc WHERE pc.id in :ids")
     void deleteById(@Param("ids")List<UUID> ids );
+
+    @Query("SELECT pc FROM ProductCustom pc WHERE pc.id in :ids and pc.user.id = :userId ")
+    List<ProductCustom> findUserProductsByIds(@Param("userId") String userId, @Param("ids") List<UUID> ids);
 }
