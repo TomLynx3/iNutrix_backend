@@ -219,26 +219,30 @@ public class MealsServiceImpl implements MealsService {
             DailyProduct dailyProduct;
             double productAmountUsed[] = new double[3]; // ProductAmountUsed[0] for product amount used in breakfast, 1 -
             MPVariable mpVariable;
-            public double getCoefficient() {
+            public double getCalorieCoefficient() {
                 return dailyProduct.getProductDTO().getKcal();
             }
         }
         List<ProductHelper> productHelperList = new ArrayList<>();
 
 
-        double totalCaloryDuringDay = 0;
+        double totalCaloriesDuringDay = 0;
         for (DailyProduct dailyProduct : products) {
-            totalCaloryDuringDay+= dailyProduct.getProductDTO().getKcal()*dailyProduct.getAmount();
+            totalCaloriesDuringDay+= dailyProduct.getProductDTO().getKcal()*dailyProduct.getAmount();
 
             ProductHelper productHelper = new ProductHelper();
             productHelper.dailyProduct = dailyProduct;
             productHelperList.add(productHelper);
         }
 
-        final double caloriesBreakfast = totalCaloryDuringDay * 0.35;
-        final double caloriesLunch = totalCaloryDuringDay * 0.45;
-        final double caloriesLast = totalCaloryDuringDay * 0.2;
-        final int calorieTolerance = 200; // solver finds solution between (necessary cal) and (necessary cal+this value)
+        final double caloriesBreakfast = totalCaloriesDuringDay * 0.35;
+        final double caloriesLunch = totalCaloriesDuringDay * 0.45;
+        final double caloriesLast = totalCaloriesDuringDay * 0.2;  // Dinner uses all remaining products
+        // solver finds solution between (necessary cal) and (necessary cal+this value)
+        final double calorieTolerance = totalCaloriesDuringDay * 0.08; // 8% tolerance
+        final double maxProductAmountPerServingCoefficient = 0.75; // Breakfast and lunch won't use more than 75% of product to get good product distribution
+
+        final String unsuitableProductGroupsForBreakfast = "LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts";
 
         MPSolver solver = MPSolver.createSolver("GLOP");
         List <MealDTO> mealsForDay = new ArrayList<>();
@@ -246,17 +250,23 @@ public class MealsServiceImpl implements MealsService {
 
 
         // breakfast
-        for (ProductHelper productHelper : productHelperList) productHelper.mpVariable = solver.makeIntVar(0, productHelper.dailyProduct.getAmount(), productHelper.dailyProduct.getName());
+        for (ProductHelper productHelper : productHelperList) {
+            productHelper.mpVariable = solver.makeNumVar(0, productHelper.dailyProduct.getAmount()*maxProductAmountPerServingCoefficient, productHelper.dailyProduct.getName());
+        }
         MPConstraint calories = solver.makeConstraint(caloriesBreakfast, caloriesBreakfast+calorieTolerance, "calories");
         MPConstraint unsuitableForBreakfast = solver.makeConstraint(0,0,"suitableForBreakfast");
-        for (ProductHelper productHelper : productHelperList){
-            calories.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
-            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches("LookUp_ProductGroup_MeatProducts|LookUp_ProductGroup_FishProducts")) unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);
-            else unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
+        for (ProductHelper productHelper : productHelperList) {
+            calories.setCoefficient(productHelper.mpVariable, productHelper.getCalorieCoefficient());
+            if (productHelper.dailyProduct.getProductGroup().getGroupName().matches(unsuitableProductGroupsForBreakfast)) {
+                unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 1);    // Preventing unsuitable products from breakfast
+            }
+            else {
+                unsuitableForBreakfast.setCoefficient(productHelper.mpVariable, 0);
+            }
         }
         MPObjective objective = solver.objective();
-        for (ProductHelper productHelper : productHelperList) objective.setCoefficient(productHelper.mpVariable, 1);
-        objective.setMaximization();
+        for (ProductHelper productHelper : productHelperList) objective.setCoefficient(productHelper.mpVariable, productHelper.dailyProduct.getAmount());
+        objective.setMinimization();
 
         final MPSolver.ResultStatus resultStatusBreakfast = solver.solve();
         if (resultStatusBreakfast == MPSolver.ResultStatus.OPTIMAL || resultStatusBreakfast == MPSolver.ResultStatus.FEASIBLE){
@@ -266,12 +276,25 @@ public class MealsServiceImpl implements MealsService {
         solver.clear();
 
         // lunch
-        for (ProductHelper productHelper : productHelperList) productHelper.mpVariable = solver.makeIntVar(0,productHelper.dailyProduct.getAmount()-productHelper.productAmountUsed[0], productHelper.dailyProduct.getName());
+        for (ProductHelper productHelper : productHelperList) {
+            double minimumProductAmountForLunch;
+            if (productHelper.dailyProduct.getAmount()-productHelper.productAmountUsed[0] >= 2.5) { // this reduces chances that dinner products will have more than 250 grams each
+                minimumProductAmountForLunch = productHelper.dailyProduct.getAmount()*0.35;
+            }
+            else {
+                minimumProductAmountForLunch = 0;
+            }
+            // Lunch is set to use up to 75% of remaining product amount
+            final double maximumProductAmountForLunch = (productHelper.dailyProduct.getAmount()-productHelper.productAmountUsed[0])*maxProductAmountPerServingCoefficient;
+            productHelper.mpVariable = solver.makeNumVar(minimumProductAmountForLunch,maximumProductAmountForLunch, productHelper.dailyProduct.getName());
+        }
         calories = solver.makeConstraint(caloriesLunch, caloriesLunch+calorieTolerance, "calories");
-        for (ProductHelper productHelper : productHelperList) calories.setCoefficient(productHelper.mpVariable, productHelper.getCoefficient());
+        for (ProductHelper productHelper : productHelperList) calories.setCoefficient(productHelper.mpVariable, productHelper.getCalorieCoefficient());
         objective = solver.objective();
-        for (ProductHelper productHelper : productHelperList) objective.setCoefficient(productHelper.mpVariable, 1);
-        objective.setMaximization();
+        for (ProductHelper productHelper : productHelperList) {
+            objective.setCoefficient(productHelper.mpVariable, productHelper.dailyProduct.getAmount());
+        }
+        objective.setMinimization();
 
         final MPSolver.ResultStatus resultStatusLunch = solver.solve();
         if (resultStatusLunch == MPSolver.ResultStatus.OPTIMAL || resultStatusLunch == MPSolver.ResultStatus.FEASIBLE){
@@ -280,15 +303,12 @@ public class MealsServiceImpl implements MealsService {
         else return null;
 
         // dinner
+        // All remaining unused products are used for dinner
         for (ProductHelper productHelper : productHelperList) productHelper.productAmountUsed[2] = productHelper.dailyProduct.getAmount()-(productHelper.productAmountUsed[0]+productHelper.productAmountUsed[1]);
 
+        // Creating and filling List<DailyProduct> for breakfast, lunch and dinner
         List<List<DailyProduct>> dailyProductLists = new ArrayList<List<DailyProduct>> (3);
         for (int i = 0; i < 3; i++) dailyProductLists.add(new ArrayList<DailyProduct>());
-        /*
-        List<DailyProduct> breakfastProducts = new ArrayList<>();
-        List<DailyProduct> lunchProducts = new ArrayList<>();
-        List<DailyProduct> dinnerProducts = new ArrayList<>();
-         */
         for (int i = 0; i < dailyProductLists.size(); i++) {
             for (ProductHelper productHelper : productHelperList) {
                 if (productHelper.productAmountUsed[i] == 0) {
