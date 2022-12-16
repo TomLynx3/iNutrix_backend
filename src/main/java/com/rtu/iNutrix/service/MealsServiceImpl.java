@@ -17,6 +17,7 @@ import com.rtu.iNutrix.service.interfaces.ProductsService;
 import com.rtu.iNutrix.service.interfaces.UserDataService;
 import com.rtu.iNutrix.utilities.constants.LookUpConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
@@ -54,11 +55,30 @@ public class MealsServiceImpl implements MealsService {
 
         List<ProductDTO> products = _productService.getAllProducts();
 
-        HashMap<ProductDTO, MPVariable> map = new HashMap<>();
+        //settings
+        final double minimalProductAmountForUse = 1; // algorithm will not use x product grams where x: [0 < x < minimalProductAmountForUse]
 
+        HashMap<ProductDTO, MPVariable[]> map = new HashMap<>(); // MPVariable [0] is binary decision variable z, MPVariable[1] is product amount x
+        // For explanation of binary decision variable, refer to: https://math.stackexchange.com/questions/849319/forbidden-range-for-a-linear-programming-variable
 
         for(ProductDTO product : products){
-            map.put(product,solver.makeNumVar(0.0,4,product.getName()));
+            MPVariable[] variableArray =
+                    {solver.makeBoolVar(product.getName() + "_z"), solver.makeNumVar(0.0,4.0, product.getName() + "_x")};
+            map.put(product, variableArray);
+        }
+        // Minimal amount constraints
+
+        // x >= min*z    ------->   x + z >= 0, coefficients: x=1, z=-min
+        for(Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            MPConstraint minimalAmountConstraint1 = solver.makeConstraint(0, Double.POSITIVE_INFINITY);
+            minimalAmountConstraint1.setCoefficient(entry.getValue()[0],-minimalProductAmountForUse); // z coefficient
+            minimalAmountConstraint1.setCoefficient(entry.getValue()[1], 1); // x coefficient
+        }
+        // x <= M*z     -------->  x + z <= 0, coefficients: x=1, z=-M
+        for(Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            MPConstraint minimalAmountConstraint2 = solver.makeConstraint(Double.NEGATIVE_INFINITY, 0);
+            minimalAmountConstraint2.setCoefficient(entry.getValue()[0], -50); // z coefficient
+            minimalAmountConstraint2.setCoefficient(entry.getValue()[1], 1); // x coefficient
         }
 
 
@@ -85,51 +105,51 @@ public class MealsServiceImpl implements MealsService {
         MPConstraint Fe = solver.makeConstraint(nutrients.getFe().getMinimumValue(),nutrients.getFe().getMaximumValue(),"Fe");
 
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            protein.setCoefficient(entry.getValue(),entry.getKey().getProtein());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            protein.setCoefficient(entry.getValue()[1],entry.getKey().getProtein());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            carbs.setCoefficient(entry.getValue(),entry.getKey().getCarbohydrates());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            carbs.setCoefficient(entry.getValue()[1],entry.getKey().getCarbohydrates());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            fat.setCoefficient(entry.getValue(),entry.getKey().getFat());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            fat.setCoefficient(entry.getValue()[1],entry.getKey().getFat());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            kcal.setCoefficient(entry.getValue(),entry.getKey().getKcal());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            kcal.setCoefficient(entry.getValue()[1],entry.getKey().getKcal());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-           A.setCoefficient(entry.getValue(),entry.getKey().getA());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+           A.setCoefficient(entry.getValue()[1],entry.getKey().getA());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            B1.setCoefficient(entry.getValue(),entry.getKey().getB1());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            B1.setCoefficient(entry.getValue()[1],entry.getKey().getB1());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            B2.setCoefficient(entry.getValue(),entry.getKey().getB2());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            B2.setCoefficient(entry.getValue()[1],entry.getKey().getB2());
         }
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            PP.setCoefficient(entry.getValue(),entry.getKey().getPP());
-        }
-
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            C.setCoefficient(entry.getValue(),entry.getKey().getC());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            PP.setCoefficient(entry.getValue()[1],entry.getKey().getPP());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            Ca.setCoefficient(entry.getValue(),entry.getKey().getCa());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            C.setCoefficient(entry.getValue()[1],entry.getKey().getC());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            P.setCoefficient(entry.getValue(),entry.getKey().getP());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            Ca.setCoefficient(entry.getValue()[1],entry.getKey().getCa());
         }
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            Fe.setCoefficient(entry.getValue(),entry.getKey().getFe());
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            P.setCoefficient(entry.getValue()[1],entry.getKey().getP());
+        }
+
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            Fe.setCoefficient(entry.getValue()[1],entry.getKey().getFe());
         }
 
         MPObjective objective = solver.objective();
@@ -137,15 +157,16 @@ public class MealsServiceImpl implements MealsService {
         int min = 1;
         int max = 10;
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            objective.setCoefficient(entry.getValue(),(int)Math.floor(Math.random()*(max-min+1)+min));
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            objective.setCoefficient(entry.getValue()[0],-1); // I guess it should not matter, as it is used for constraints only
+            objective.setCoefficient(entry.getValue()[1],(int)Math.floor(Math.random()*(max-min+1)+min));
         }
 
 
 
         objective.setMaximization();
 
-        solver.solve();
+        final MPSolver.ResultStatus resultStatus = solver.solve();
 
 
         List<DailyProduct> mealProducts = new ArrayList<>();
@@ -154,10 +175,10 @@ public class MealsServiceImpl implements MealsService {
 
         metadata.setProducts(mealProducts);
 
-        for (Map.Entry<ProductDTO, MPVariable> entry : map.entrySet()) {
-            if(entry.getValue().solutionValue() > 0){
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            if(entry.getValue()[1].solutionValue() > 0){
                 ProductDTO product = entry.getKey();
-                double value = entry.getValue().solutionValue();
+                double value = entry.getValue()[1].solutionValue();
 
                 mealProducts.add(new DailyProduct(product,value));
 
@@ -364,13 +385,13 @@ public class MealsServiceImpl implements MealsService {
         return null;
     }
 
-    private void _addCustomConstraintForProductGroup(MPSolver solver ,HashMap<ProductDTO,MPVariable> variables, String name,double lowerValue,double upperValue,UUID productGroup){
-        Map<ProductDTO, MPVariable> filtredVariables = variables.entrySet().stream().filter(x->x.getKey().getProductGroup().getId().equals(productGroup)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
+    private void _addCustomConstraintForProductGroup(MPSolver solver ,HashMap<ProductDTO,MPVariable[]> variables, String name,double lowerValue,double upperValue,UUID productGroup){
+        Map<ProductDTO, MPVariable[]> filtredVariables = variables.entrySet().stream().filter(x->x.getKey().getProductGroup().getId().equals(productGroup)).collect(Collectors.toMap(e->e.getKey(),e->e.getValue()));
 
         MPConstraint constraint = solver.makeConstraint(lowerValue,upperValue,name);
 
-        for (Map.Entry<ProductDTO, MPVariable> entry :filtredVariables.entrySet()) {
-            constraint.setCoefficient(entry.getValue(),1);
+        for (Map.Entry<ProductDTO, MPVariable[]> entry :filtredVariables.entrySet()) {
+            constraint.setCoefficient(entry.getValue()[0],1);
         }
     }
 
