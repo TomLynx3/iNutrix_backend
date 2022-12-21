@@ -49,35 +49,42 @@ public class MealsServiceImpl implements MealsService {
     @Override
     public DietDayMetaData getDietDayMetadata() throws IllegalAccessException {
         Loader.loadNativeLibraries();
-        MPSolver solver = MPSolver.createSolver("GLOP");
+        MPSolver solver = MPSolver.createSolver("SCIP");
 
         Nutrients nutrients  = _getNeededNutrients();
 
         List<ProductDTO> products = _productService.getAllProducts();
 
         //settings
-        final double minimalProductAmountForUse = 1; // algorithm will not use x product grams where x: [0 < x < minimalProductAmountForUse]
+
+        /*
+        Needed. Small scale like 1 = 100g does not work due to float errors
+        Everything will be scaled by this coefficient and then de-scaled at the end
+         */
+        final double scalingCoefficient = 100;
+        final double minimalProductAmountForUse = 0.1*scalingCoefficient; // algorithm will not use x product grams where x: [0 < x < minimalProductAmountForUse]
+        final double numberM = 10*scalingCoefficient;
 
         HashMap<ProductDTO, MPVariable[]> map = new HashMap<>(); // MPVariable [0] is binary decision variable z, MPVariable[1] is product amount x
         // For explanation of binary decision variable, refer to: https://math.stackexchange.com/questions/849319/forbidden-range-for-a-linear-programming-variable
 
         for(ProductDTO product : products){
             MPVariable[] variableArray =
-                    {solver.makeBoolVar(product.getName() + "_z"), solver.makeNumVar(0.0,4.0, product.getName() + "_x")};
+                    {solver.makeIntVar(0,1,product.getName() + "_z"), solver.makeIntVar(0.0,4.0*scalingCoefficient, product.getName() + "_x")};
             map.put(product, variableArray);
         }
         // Minimal amount constraints
 
-        // x >= min*z    ------->   x + z >= 0, coefficients: x=1, z=-min
+        // x >= min*z    ------->   x + z >= 0, coefficients: x=1, z=-min  Constrains so that x would not be less than minimalProductAmountForUse
         for(Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            MPConstraint minimalAmountConstraint1 = solver.makeConstraint(0, Double.POSITIVE_INFINITY);
-            minimalAmountConstraint1.setCoefficient(entry.getValue()[0],-minimalProductAmountForUse); // z coefficient
+            MPConstraint minimalAmountConstraint1 = solver.makeConstraint(-1, Double.POSITIVE_INFINITY);
+            minimalAmountConstraint1.setCoefficient(entry.getValue()[0],-minimalProductAmountForUse*scalingCoefficient); // z coefficient
             minimalAmountConstraint1.setCoefficient(entry.getValue()[1], 1); // x coefficient
         }
         // x <= M*z     -------->  x + z <= 0, coefficients: x=1, z=-M
         for(Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            MPConstraint minimalAmountConstraint2 = solver.makeConstraint(Double.NEGATIVE_INFINITY, 0);
-            minimalAmountConstraint2.setCoefficient(entry.getValue()[0], -50); // z coefficient
+            MPConstraint minimalAmountConstraint2 = solver.makeConstraint(Double.NEGATIVE_INFINITY, 1);
+            minimalAmountConstraint2.setCoefficient(entry.getValue()[0], -numberM); // z coefficient
             minimalAmountConstraint2.setCoefficient(entry.getValue()[1], 1); // x coefficient
         }
 
@@ -106,50 +113,50 @@ public class MealsServiceImpl implements MealsService {
 
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            protein.setCoefficient(entry.getValue()[1],entry.getKey().getProtein());
+            protein.setCoefficient(entry.getValue()[1],entry.getKey().getProtein() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            carbs.setCoefficient(entry.getValue()[1],entry.getKey().getCarbohydrates());
+            carbs.setCoefficient(entry.getValue()[1],entry.getKey().getCarbohydrates() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            fat.setCoefficient(entry.getValue()[1],entry.getKey().getFat());
+            fat.setCoefficient(entry.getValue()[1],entry.getKey().getFat() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            kcal.setCoefficient(entry.getValue()[1],entry.getKey().getKcal());
+            kcal.setCoefficient(entry.getValue()[1],entry.getKey().getKcal() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-           A.setCoefficient(entry.getValue()[1],entry.getKey().getA());
+           A.setCoefficient(entry.getValue()[1],entry.getKey().getA() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            B1.setCoefficient(entry.getValue()[1],entry.getKey().getB1());
+            B1.setCoefficient(entry.getValue()[1],entry.getKey().getB1() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            B2.setCoefficient(entry.getValue()[1],entry.getKey().getB2());
+            B2.setCoefficient(entry.getValue()[1],entry.getKey().getB2() / scalingCoefficient);
         }
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            PP.setCoefficient(entry.getValue()[1],entry.getKey().getPP());
-        }
-
-        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            C.setCoefficient(entry.getValue()[1],entry.getKey().getC());
+            PP.setCoefficient(entry.getValue()[1],entry.getKey().getPP() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            Ca.setCoefficient(entry.getValue()[1],entry.getKey().getCa());
+            C.setCoefficient(entry.getValue()[1],entry.getKey().getC() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            P.setCoefficient(entry.getValue()[1],entry.getKey().getP());
+            Ca.setCoefficient(entry.getValue()[1],entry.getKey().getCa() / scalingCoefficient);
         }
 
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
-            Fe.setCoefficient(entry.getValue()[1],entry.getKey().getFe());
+            P.setCoefficient(entry.getValue()[1],entry.getKey().getP() / scalingCoefficient);
+        }
+
+        for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
+            Fe.setCoefficient(entry.getValue()[1],entry.getKey().getFe() / scalingCoefficient);
         }
 
         MPObjective objective = solver.objective();
@@ -178,7 +185,7 @@ public class MealsServiceImpl implements MealsService {
         for (Map.Entry<ProductDTO, MPVariable[]> entry : map.entrySet()) {
             if(entry.getValue()[1].solutionValue() > 0){
                 ProductDTO product = entry.getKey();
-                double value = entry.getValue()[1].solutionValue();
+                double value = entry.getValue()[1].solutionValue() / scalingCoefficient;
 
                 mealProducts.add(new DailyProduct(product,value));
 
